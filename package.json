@@ -34,6 +34,7 @@
   "homepage": "https://github.com/Eleg-i/port-proxy/#readme",
   "license": "ISC",
   "scripts": {
+    "dev": "node --watch --inspect=9229 ./test/index.ts ",
     "build:types": "tsc --emitDeclarationOnly",
     "build-watch": "vite build --watch",
     "build": "vite build",
@@ -53,6 +54,7 @@
   "devDependencies": {
     "@eslint/js": "^9.34.0",
     "@microsoft/api-extractor": "^7.52.11",
+    "@types/express": "^5.0.3",
     "@types/node": "^24.3.0",
     "@typescript-eslint/eslint-plugin": "^8.41.0",
     "@typescript-eslint/parser": "^8.41.0",
@@ -62,6 +64,7 @@
     "eslint-plugin-jsdoc": "^54.2.0",
     "eslint-plugin-jsx": "^0.1.0",
     "eslint-plugin-vue": "^10.4.0",
+    "express": "^5.1.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.6",
     "prettier": "^3.6.2",
