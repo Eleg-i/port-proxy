@@ -1,0 +1,9 @@
+# 检测是否是合并提交
+if git rev-parse --verify MERGE_HEAD >/dev/null 2>&1; then
+  # 是合并提交，跳过 lint-staged
+  echo “Skipping lint-staged on merge commit” 
+  exit 0 
+fi 
+
+# 不是合并提交，运行 lint-staged
+npx -y lint-staged

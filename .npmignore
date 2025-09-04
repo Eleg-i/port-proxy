@@ -1,0 +1,14 @@
+.git
+.gitignore
+.husky
+modules
+script
+node_modules
+test
+debug
+.eslintignore
+.eslintrc.js
+.npmignore
+.prettierignore
+.prettierrc.js
+lint-staged.config.js

@@ -1,0 +1,76 @@
+{
+  "name": "port-proxy",
+  "version": "0.1.0",
+  "description": "监听指定的端口，并转发到指定端口。（Listens to the specified port and forwards to the specified port.）",
+  "type": "module",
+  "module": "dist/index.mjs",
+  "main": "dist/index.cjs",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "outfile": "index",
+  "keywords": [
+    "watch",
+    "DOM",
+    "Element",
+    "observer"
+  ],
+  "author": "cailiao(Eleg-i)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Eleg-i/port-proxy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Eleg-i/port-proxy/issues"
+  },
+  "homepage": "https://github.com/Eleg-i/port-proxy/#readme",
+  "license": "ISC",
+  "scripts": {
+    "build:types": "tsc --emitDeclarationOnly",
+    "build-watch": "vite build --watch",
+    "build": "vite build",
+    "type-check": "tsc --noEmit --skipLibCheck",
+    "prettier": "prettier -w --cache src",
+    "lint": "eslint --fix --cache --ext .js,.ts,.vue,.mjs,cjs --max-warnings=0 src",
+    "verify": "pnpm run type-check && pnpm run prettier && pnpm run lint",
+    "prepare": "husky install",
+    "prepublishOnly": "npm run build -s",
+    "patch": "npm version patch",
+    "minor": "npm version minor",
+    "major": "npm version major",
+    "publish": "npm publish",
+    "postpublish": "git push origin main --follow-tags",
+    "toc": "doctoc --github --title \"# Changelog\" CHANGELOG.md"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "@microsoft/api-extractor": "^7.52.11",
+    "@types/node": "^24.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.41.0",
+    "@typescript-eslint/parser": "^8.41.0",
+    "doctoc": "^2.2.1",
+    "eslint": "^8.57.1",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsdoc": "^54.2.0",
+    "eslint-plugin-jsx": "^0.1.0",
+    "eslint-plugin-vue": "^10.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.6",
+    "prettier": "^3.6.2",
+    "prettier-eslint": "^16.4.2",
+    "typescript": "^5.9.2",
+    "unplugin-dts": "1.0.0-beta.6",
+    "vite": "npm:rolldown-vite@latest",
+    "vite-plugin-dts": "^4.5.4",
+    "vite-plugin-static-copy": "^3.1.2",
+    "vue-eslint-parser": "^8.3.0"
+  }
+}

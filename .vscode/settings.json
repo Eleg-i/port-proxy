@@ -1,0 +1,47 @@
+{
+  // 保存时自动格式化
+  // "editor.formatOnSave": false,
+  // 保存时自动修复
+  "editor.codeActionsOnSave": {
+    "source.fixAll.prettier": "never",
+    "source.fixAll.eslint": "always",
+    "source.organizeImports": "never",
+    "source.fixAll.stylelint": "always"
+  },
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "vue",
+    "html",
+  ],
+  "stylelint.enable": true,
+  "stylelint.validate": [
+    "css",
+    "less",
+    "scss",
+    "sass",
+    "html",
+    "vue"
+  ],
+  // 消除json文件中的注释警告
+  "files.associations": {
+    "manifest.json": "jsonc",
+    "pages.json": "jsonc"
+  },
+  // 文件嵌套
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  // 文件嵌套规则
+  "explorer.fileNesting.patterns": {
+    ".eslintrc.*": ".eslint*, .prettier*, .lintstagedrc*, babel.config.*, .editorConfig, .stylelint*",
+    ".gitignore": ".gitattributes, .gitmodules, .gitkeep",
+    "package.json": "package-lock.json, yarn.lock, pnpm-workspace.yaml, pnpm-lock.yaml, .npmrc",
+    "vite.config.*": "pages.config.*, manifest.config.*, uno.config.*, volar.config.*, *.env, .env.*, uni-pages.d.ts, vite.*",
+    "*.js": "$(capture).js.gz, $(capture).js.map",
+    "*.css": "$(capture).css.gz, $(capture).css.map"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "git.enableCommitSigning": false
+}
