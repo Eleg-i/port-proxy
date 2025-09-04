@@ -1,0 +1,9 @@
+manifest.json
+pages.json
+*.md
+!.lintstagedrc.mjs
+!.prettierrc.ts
+!.stylelintrc.cjs
+!.eslint-overrides.cjs
+types/components.d.ts
+types/auto-imports.d.ts
