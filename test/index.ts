@@ -20,7 +20,7 @@ app.get(/\/upload\.txt/, express.static(publicDir), (_req, res) => {
 })
 
 app.post('/upload', async (req, res) => {
-  const fileWriteStream = createWriteStream(path.join(publicDir, 'upload.txt'))
+  const fileWriteStream = createWriteStream(path.join(publicDir, 'upload.2.txt'))
 
   req.pipe(fileWriteStream)
 
@@ -53,9 +53,9 @@ const proxy = new PortProxy({
   // 目标，被代理的原服务
   target: '127.0.0.1',
   targetPort: 3000,
-  verbose: true,
+  // verbose: true,
   // 单个 tcp 限速，单位 B/s，限速对每个 tcp 连接有 5% 的波动，总限速同
-  limiteRate: 100 * 1024
+  limiteRate: 400 * 1024
   // 所有 tcp 共享的限速，单位 B/s，注意后面的设置（非缺省）会覆盖前面的设置
   // totalLimiteRate?: number
 })

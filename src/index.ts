@@ -12,10 +12,11 @@ export interface ProxyOptions {
   targetPort: number
   verbose?: boolean
   protocol?: 'tcp' | 'udp'
-  // 单个 tcp 限速，单位 B/s，限速对每个 tcp 连接有 5% 的波动，总限速同
+  // 单个 tcp 服务限速，单位 B/s，限速对每个 tcp 连接有 5% 的波动，总限速同
   limiteRate?: number
-  // 所有 tcp 共享的限速，单位 B/s，注意后面的设置（非缺省）会覆盖前面的设置
-  totalLimiteRate?: number
+  // 所有 tcp 服务共享的限速，单位 B/s，注意后续实例的设置（非缺省）会更新前面的设置
+  /**@todo 待实现 */
+  // totalLimiteRate?: number
   // Qos 权重比例，当网络拥塞时，会按比例分配消息窗口大小，优先传输，但每个连接会至少占用 10B/s 的带宽，权重相同则采用 node 底层默认策略。
   /**@todo 待实现 */
   // weight?: number
@@ -36,42 +37,28 @@ class PortProxy {
 
   static #connections = new Map<PortProxy, { sourceSocket: net.Socket; targetSocket: net.Socket }>()
 
-  // static #minRate: number = 10
-
   /**
    * 是否超限
    */
   static get #overTotalLimit() {
-    return PortProxy.#totalRate > 0 && PortProxy.#totalRate > PortProxy.#totalLimiteRate * 1.025
+    return (
+      PortProxy.#totalLimiteRate > 0 && PortProxy.#totalRate > PortProxy.#totalLimiteRate * 1.025
+    )
   }
 
   /**
    * 是否低限
    */
   static get #lowTotalLimit() {
-    return PortProxy.#totalRate < PortProxy.#totalLimiteRate * 0.975
-  }
-
-  static {
-    setInterval(() => {
-      let aveWindowSize = 0,
-          aliveCount = 0
-
-      PortProxy.#totalRate = 0
-      PortProxy.#connections.forEach((_item, proxy) => {
-        proxy?.calcRate()
-        PortProxy.#totalRate += proxy.rate
-        if (proxy.windowSize > 10) {
-          aveWindowSize += proxy.windowSize
-          aliveCount++
-        }
-      })
-      PortProxy.#aveWindowSize = Math.floor(aveWindowSize / aliveCount)
-    }, 1000)
+    return (
+      PortProxy.#totalLimiteRate > 0 && PortProxy.#totalRate < PortProxy.#totalLimiteRate * 0.975
+    )
   }
 
   // 平均窗口大小
   static #aveWindowSize = 0
+
+  // #id: string
 
   #source: string
 
@@ -93,32 +80,38 @@ class PortProxy {
 
   rate: number = 0
 
-  windowSize: number = 10
+  windowSize: number = 1
 
   /**
    * 是否超速
    */
   get #overlimit() {
-    return this.#limiteRate > 0 && this.rate > this.#limiteRate * 1.025
+    return (
+      this.windowSize > 1 &&
+      (this.#limiteRate > 0 && this.rate > this.#limiteRate * 1.025 ||
+        PortProxy.#aveWindowSize > 1 && this.windowSize > PortProxy.#aveWindowSize * 1.1 ||
+        PortProxy.#overTotalLimit)
+    )
   }
 
   /**
    * 是否低速
    */
   get #lowLimit() {
-    return this.#limiteRate > 0 && this.rate < this.#limiteRate * 0.975
+    return (
+      this.#limiteRate > 0 && this.rate < this.#limiteRate * 0.975 ||
+      PortProxy.#aveWindowSize > 10 && this.windowSize < PortProxy.#aveWindowSize * 0.9 ||
+      PortProxy.#lowTotalLimit
+    )
   }
-
-  /**
-   * 计算当前代理的流量
-   */
-  calcRate: () => void = () => {}
 
   /**
    * 构造器
    * @param options 配置项
    */
   constructor(options: ProxyOptions) {
+    // this.#id = Math.random().toString(36)
+    //   .slice(2)
     this.#source = options.source
     this.#sourcePort = options.sourcePort
     this.#target = options.target
@@ -126,8 +119,8 @@ class PortProxy {
     this.#verbose = options.verbose ?? false
     this.#protocol = options.protocol ?? 'tcp'
     this.#limiteRate = Math.floor(Math.abs(options.limiteRate ?? 0)) || 0
-    PortProxy.#totalLimiteRate =
-      Math.floor(Math.abs(options.totalLimiteRate ?? 0)) ?? PortProxy.#totalLimiteRate
+    // PortProxy.#totalLimiteRate =
+    // Math.floor(Math.abs(options.totalLimiteRate ?? 0)) ?? PortProxy.#totalLimiteRate
   }
 
   /**
@@ -189,19 +182,18 @@ class PortProxy {
        * @param sourceError 源socket的错误
        * @param targetError 目标socket的错误
        */
-      const cleanup = (sourceError: undefined | Error, targetError: undefined | Error) => {
-        if (this.#verbose) {
-          const clientInfo = `${sourceSocket.remoteAddress}:${sourceSocket.remotePort}`
-
-          console.debug(
-            `连接关闭: ${clientInfo} ${sourceError?.message ?? ''} ${targetError?.message ?? ''}`
-          )
-        }
-
-        connections.delete(this)
-
+      const cleanup = async (sourceError: undefined | Error, targetError: undefined | Error) => {
         sourceSocket.destroy(targetError)
         targetSocket.destroy(sourceError)
+        this.#endHandler({ sourceError, targetError })
+        await new Promise(res => setTimeout(res, 100))
+        connections.delete(this)
+
+        const clientInfo = `${sourceSocket?.remoteAddress}:${sourceSocket?.remotePort} --> ${
+          targetSocket?.remoteAddress
+        }:${targetSocket?.remotePort}`
+
+        console.debug(`连接 ${clientInfo} 资源已回收`)
       }
 
       sourceSocket.on('close', () => cleanup(void 0, void 0))
@@ -287,53 +279,88 @@ class PortProxy {
     sourceWriteStream: WritableStream<Uint8Array>
     targetWriteStream: WritableStream<Uint8Array>
   }) {
-    let lastSourceChunk: Uint8Array | null = null,
-        lastChunkSize = 0
+    let currentChunk: Uint8Array | null = null,
+        lastChunkSize = 0,
+        clearRatetimer: NodeJS.Timeout | null = null,
+        lastTime: number = Date.now()
+    // count = 0
+    /**
+     * 获取速度
+     */
+    const calcRate = () => {
+      if (clearRatetimer) clearTimeout(clearRatetimer)
+      if (!currentChunk) {
+        clearRatetimer = setTimeout(() => {
+          this.rate = 0
+          this.windowSize = 1
+        }, 1000)
+
+        return
+      }
+
+      const currentTime = Date.now()
+      const delta = currentTime - lastTime
+
+      if (delta <= 0) return
+
+      const currentChunkSize = currentChunk.byteLength
+      const rate = Math.ceil(Math.abs(lastChunkSize - currentChunkSize) / (delta / 1000))
+
+      this.rate = rate
+      lastTime = currentTime
+      PortProxy.#totalRate = 0
+      lastChunkSize = currentChunkSize
+      // count = 0
+    }
+
     /**
      * 将普通流转换为带 Qos 的流
      * @param stream 可读流
      */
     const transfStream = (stream: ReadableStream<Uint8Array>) => {
-      const sourceReader = stream.getReader()
+      const reader = stream.getReader()
 
-      const newSourceReadableStream = new ReadableStream({
+      const newReadableStream = new ReadableStream({
         pull: async controller => {
-          lastSourceChunk ??= await handleReadNextChunk()
-          // console.log('🚀 ~ PortProxy ~ transfStream ~ pull:')
+          let count = 0
 
-          if (
-            (this.#overlimit ||
-              this.windowSize > 0 && this.windowSize > PortProxy.#aveWindowSize * 1.1 ||
-              PortProxy.#overTotalLimit) &&
-            this.windowSize > 10
-          ) {
-            this.windowSize *= 0.8
-          } else if (
-            this.#lowLimit ||
-            this.windowSize > 0 && this.windowSize < PortProxy.#aveWindowSize * 0.9 ||
-            PortProxy.#lowTotalLimit
-          )
-            this.windowSize *= 1.1
+          while (count++ < 1e3) {
+            await Promise.resolve()
+          }
 
-          if (lastSourceChunk) {
-            const willsend = lastSourceChunk.slice(0, this.windowSize)
+          currentChunk ??= await handleReadNextChunk()
+
+          if (this.#overlimit)
+            // 超速
+            this.windowSize = Math.max(1, Math.floor(this.windowSize * 0.98))
+          else if (this.#lowLimit)
+            // 失速
+            this.windowSize = Math.ceil(this.windowSize * 1.02)
+
+          if (currentChunk) {
+            const willsend = currentChunk.slice(0, this.windowSize)
 
             controller.enqueue(willsend)
 
+            calcRate()
+            // if (count > Math.min(15, Math.max(1, Math.log(this.#limiteRate / 100)))) {
+            //   calcRate.flush()
+            //   count = 0
+            // }
+
+            // count++
+            calcAveWindowSize()
+
             this.#verboseHandler(stream === sourceReadStream ? 'source' : 'target', willsend)
 
-            const rest = lastSourceChunk.slice(this.windowSize)
+            const rest = currentChunk.slice(this.windowSize)
 
-            if (rest.byteLength) lastSourceChunk = rest
-            else lastSourceChunk = null
-            // else {
-            //   lastSourceChunk = await handleReadNextChunk()
-            //   if (!lastSourceChunk) {
-            //     // controller.close()
-            //     controller.enqueue(null)
-            //     console.log('🚀 ~ close:')
-            //   }
-            // }
+            if (rest.byteLength) currentChunk = rest
+            else {
+              currentChunk = await handleReadNextChunk()
+
+              if (!currentChunk) controller.close()
+            }
           }
         }
       })
@@ -342,36 +369,74 @@ class PortProxy {
        * 读取数据
        */
       const handleReadNextChunk = async () => {
-        const { done, value: chunk } = await sourceReader.read()
+        let result
+
+        try {
+          result = await reader.read()
+        } catch (err) {
+          const error = err as Error
+
+          if (error.name !== 'AbortError') this.#endHandler({ sourceError: err as Error })
+
+          return null
+        }
+
+        const { done, value: chunk } = result
 
         if (done) return null
 
         return chunk
       }
 
-      return newSourceReadableStream
+      /**
+       * 计算平均窗口大小
+       */
+      const calcAveWindowSize = () => {
+        let aveWindowSize = 0,
+            aliveCount = 0
+
+        if (PortProxy.#connections.size >= 2) {
+          PortProxy.#connections.forEach((_item, proxy) => {
+            PortProxy.#totalRate += proxy.rate
+            if (proxy.windowSize > 10) {
+              aveWindowSize += proxy.windowSize
+              aliveCount++
+            }
+          })
+          PortProxy.#aveWindowSize = Math.floor(aveWindowSize / aliveCount)
+        }
+      }
+
+      return newReadableStream
     }
     const newSourceReadableStream = transfStream(sourceReadStream)
     const newTargetReadableStream = transfStream(targetReadStream)
 
-    /**
-     * 获取速度
-     */
-    const calcRate = () => {
-      if (!lastSourceChunk) {
-        this.rate = 0
-        this.windowSize = 10
+    ;(async () => {
+      const writer = targetWriteStream.getWriter()
 
-        return
+      for await (const chunk of newSourceReadableStream) {
+        try {
+          await writer.write(chunk)
+          await writer.ready
+        } catch (err) {
+          this.#endHandler({ targetError: err as Error })
+        }
       }
+    })()
 
-      this.rate = Math.abs(lastChunkSize - lastSourceChunk.byteLength)
-      lastChunkSize = lastSourceChunk.byteLength
-    }
+    ;(async () => {
+      const writer = sourceWriteStream.getWriter()
 
-    this.calcRate = calcRate
-    newSourceReadableStream.pipeTo(targetWriteStream)
-    newTargetReadableStream.pipeTo(sourceWriteStream)
+      for await (const chunk of newTargetReadableStream) {
+        try {
+          await writer.write(chunk)
+          await writer.ready
+        } catch (err) {
+          this.#endHandler({ targetError: err as Error })
+        }
+      }
+    })()
   }
 
   /**
@@ -489,7 +554,32 @@ class PortProxy {
       console.debug(`来自 ${from} 的数据: ${message.length} 字节`)
       const hex = Buffer.from(message).toString('hex')
 
-      console.debug(`${hex.slice(0, 50)}...${hex.slice(-50, hex.length)}`)
+      console.debug(
+        `${hex.slice(0, 50)}${hex.length > 100 ? '...' : ''}${hex.slice(-50, hex.length)}`
+      )
+    }
+  }
+
+  /**
+   * 错误处理
+   * @param opt             错误信息
+   * @param opt.sourceError 源错误
+   * @param opt.targetError 目标错误
+   */
+  #endHandler({ sourceError, targetError }: { sourceError?: Error; targetError?: Error }) {
+    const error = sourceError ?? targetError
+
+    if (error) console.error(error)
+    if (this.#verbose) {
+      const { sourceSocket, targetSocket } = PortProxy.#connections.get(this) ?? {}
+      const clientInfo = `${sourceSocket?.remoteAddress}:${sourceSocket?.remotePort} -x-> ${
+        targetSocket?.remoteAddress
+      }:${targetSocket?.remotePort}`
+      const isCanceled = (sourceError?.name ?? targetError?.message)?.includes('AbortError')
+
+      console.debug(
+        `连接${isCanceled ? '取消' : '关闭'}: ${clientInfo} ${sourceError?.message ?? ''} ${targetError?.message ?? ''}`
+      )
     }
   }
 
