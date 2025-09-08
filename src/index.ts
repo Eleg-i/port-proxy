@@ -654,7 +654,7 @@ class PortProxy {
  * 解析命令行参数
  * @param args 命令行参数
  */
-function parseArgs(args: string[]): ProxyOptions {
+export function parseArgs(args: string[]): ProxyOptions {
   const options: ProxyOptions = {
     source: '0.0.0.0',
     sourcePort: 14491,
@@ -706,7 +706,7 @@ function parseArgs(args: string[]): ProxyOptions {
 /**
  * 命令行接口
  */
-async function main() {
+export async function main() {
   const options = parseArgs(process.argv.slice(2))
 
   // 创建并启动代理
@@ -742,5 +742,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(console.error)
 }
 
-// 导出模块
 export default PortProxy

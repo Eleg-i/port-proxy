@@ -21,7 +21,7 @@ export default defineConfig({
     // 生成类型声明文件
     dts({
       outDirs: ['dist'],
-      // include: ['src/index.ts'],
+      include: ['src/index.ts'],
       bundleTypes: true
     }),
     viteStaticCopy({

@@ -6,8 +6,12 @@
   "module": "dist/index.mjs",
   "main": "dist/index.cjs",
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
+  "bin": {
+    "portproxy": "./bin/index.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -35,7 +39,6 @@
   "license": "ISC",
   "scripts": {
     "dev": "node --watch --inspect=9229 ./test/index.ts ",
-    "build:types": "tsc --emitDeclarationOnly",
     "build-watch": "vite build --watch",
     "build": "vite build",
     "type-check": "tsc --noEmit --skipLibCheck",
