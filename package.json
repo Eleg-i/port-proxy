@@ -1,6 +1,6 @@
 {
   "name": "port-proxy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "监听指定的端口，并转发到指定端口。（Listens to the specified port and forwards to the specified port.）",
   "type": "module",
   "module": "dist/index.mjs",
