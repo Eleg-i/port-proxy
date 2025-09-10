@@ -1,7 +1,7 @@
 {
   "name": "port-proxy",
   "version": "0.1.1",
-  "description": "监听指定的端口，并转发到指定端口。（Listens to the specified port and forwards to the specified port.）",
+  "description": "Listens to the specified port and forwards to the specified port.（监听指定的端口，并转发到指定端口。）",
   "type": "module",
   "module": "dist/index.mjs",
   "main": "dist/index.cjs",
@@ -29,7 +29,10 @@
     "udp",
     "network",
     "traffic",
-    "rate-limit"
+    "rate-limit",
+    "代理",
+    "端口转发",
+    "速率限制"
   ],
   "author": "cailiao(Eleg-i)",
   "repository": {
