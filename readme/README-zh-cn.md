@@ -11,13 +11,13 @@
 安装依赖包
 
 ```bash
-npm i @cailiao/port-proxy
+npm i port-proxy
 ```
 
 #### 导入
 
 ```javascript
-import PortProxy from '@cailiao/port-proxy'
+import PortProxy from 'port-proxy'
 ```
 
 #### 使用
@@ -68,35 +68,29 @@ new PortProxy(options: ProxyOptions)
 ##### 参数
 
 - `options`: `Object` 类型，必需，配置选项对象
-
+  
   `options` 的属性如下：
-
+  
   - `source`: `string` 类型，必需
-
+    
     监听地址。
-
   - `sourcePort`: `number` 类型，必需
-
+    
     监听端口。
-
   - `target`: `string` 类型，必需
-
+    
     目标地址。
-
   - `targetPort`: `number` 类型，必需
-
+    
     目标端口。
-
   - `verbose`: `boolean` 类型，可选
-
+    
     是否输出详细日志，默认为 false。
-
   - `protocol`: `'tcp' | 'udp'` 类型，可选
-
+    
     使用的协议，默认为 'tcp'。
-
   - `limiteRate`: `number` 类型，可选
-
+    
     单个 TCP 服务限速，单位 B/s，限速对每个 TCP 连接有 5% 的波动。默认为 0（不限速）。
 
 #### 方法
@@ -138,14 +132,14 @@ new PortProxy(options: ProxyOptions)
 安装全局包后可以直接使用命令行工具：
 
 ```bash
-npm install -g @cailiao/port-proxy
+npm install -g port-proxy
 portproxy --source 127.0.0.1 --source-port 3001 --target 127.0.0.1 --target-port 3000 --verbose --protocol tcp --limite-rate 409600
 ```
 
 或者在项目中使用：
 
 ```bash
-npx @cailiao/port-proxy --source 127.0.0.1 --source-port 3001 --target 127.0.0.1 --target-port 3000
+npx port-proxy --source 127.0.0.1 --source-port 3001 --target 127.0.0.1 --target-port 3000
 ```
 
 ### 选项
@@ -164,3 +158,4 @@ npx @cailiao/port-proxy --source 127.0.0.1 --source-port 3001 --target 127.0.0.1
 ```bash
 portproxy --source 192.168.196.2 --source-port 14491 --target 127.0.0.1 --target-port 14490
 ```
+
