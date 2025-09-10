@@ -22,10 +22,14 @@
   "types": "./dist/index.d.ts",
   "outfile": "index",
   "keywords": [
-    "watch",
-    "DOM",
-    "Element",
-    "observer"
+    "port",
+    "proxy",
+    "forward",
+    "tcp",
+    "udp",
+    "network",
+    "traffic",
+    "rate-limit"
   ],
   "author": "cailiao(Eleg-i)",
   "repository": {
