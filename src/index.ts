@@ -319,6 +319,12 @@ class PortProxy {
       lastChunkSize = currentChunkSize
       // count = 0
     }
+    /**
+     * 暂停
+     * @param lastTime 上次时间
+     */
+    const pause = (lastTime: number) =>
+      Date.now() - lastTime < Math.log(1024) / Math.log(this.windowSize + 1)
 
     /**
      * 将普通流转换为带 Qos 的流
@@ -326,14 +332,11 @@ class PortProxy {
      */
     const transfStream = (stream: ReadableStream<Uint8Array>) => {
       const reader = stream.getReader()
-
       const newReadableStream = new ReadableStream({
         pull: async controller => {
-          let count = 0
+          const lastTime = Date.now()
 
-          while (count++ < 1e3) {
-            await Promise.resolve()
-          }
+          while (pause(lastTime)) for (let i = 0; i < 1e2; i++) await Promise.resolve()
 
           currentChunk ??= await handleReadNextChunk()
 
