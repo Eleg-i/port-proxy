@@ -186,6 +186,7 @@ class PortProxy {
         sourceSocket.destroy(targetError)
         targetSocket.destroy(sourceError)
         this.#endHandler({ sourceError, targetError })
+
         await new Promise(res => setTimeout(res, 100))
         connections.delete(this)
 
@@ -243,7 +244,7 @@ class PortProxy {
      * @param readableStream 可读流
      * @param writableStream 可写流
      */
-    const transform = (readableStream: ReadableStream, writableStream: WritableStream) => {
+    const transform = async (readableStream: ReadableStream, writableStream: WritableStream) => {
       // 创建双向转换流用于日志记录
       const sourceToTargetTransform = new TransformStream({
         transform: (chunk, controller) => {
@@ -253,7 +254,13 @@ class PortProxy {
         }
       })
 
-      readableStream.pipeThrough(sourceToTargetTransform).pipeTo(writableStream)
+      try {
+        await readableStream.pipeThrough(sourceToTargetTransform).pipeTo(writableStream)
+      } catch (err) {
+        this.#endHandler({ sourceError: err as Error })
+
+        return null
+      }
     }
 
     transform(sourceReadStream, targetWriteStream)
@@ -374,9 +381,7 @@ class PortProxy {
         try {
           result = await reader.read()
         } catch (err) {
-          const error = err as Error
-
-          if (error.name !== 'AbortError') this.#endHandler({ sourceError: err as Error })
+          this.#endHandler({ sourceError: err as Error })
 
           return null
         }
@@ -569,16 +574,16 @@ class PortProxy {
   #endHandler({ sourceError, targetError }: { sourceError?: Error; targetError?: Error }) {
     const error = sourceError ?? targetError
 
+    if (error?.name === 'AbortError') return
     if (error) console.error(error)
     if (this.#verbose) {
       const { sourceSocket, targetSocket } = PortProxy.#connections.get(this) ?? {}
       const clientInfo = `${sourceSocket?.remoteAddress}:${sourceSocket?.remotePort} -x-> ${
         targetSocket?.remoteAddress
       }:${targetSocket?.remotePort}`
-      const isCanceled = (sourceError?.name ?? targetError?.message)?.includes('AbortError')
 
       console.debug(
-        `连接${isCanceled ? '取消' : '关闭'}: ${clientInfo} ${sourceError?.message ?? ''} ${targetError?.message ?? ''}`
+        `连接关闭: ${clientInfo} ${sourceError?.message ?? ''} ${targetError?.message ?? ''}`
       )
     }
   }
@@ -723,6 +728,9 @@ export async function main() {
 
   process.on('SIGINT', shutdown)
   process.on('SIGTERM', shutdown)
+  process.on('uncaughtException', err => {
+    console.error('uncaughtException', err)
+  })
 
   // 启动代理
   try {

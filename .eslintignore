@@ -7,3 +7,4 @@ pages.json
 !.eslint-overrides.cjs
 types/components.d.ts
 types/auto-imports.d.ts
+dist

@@ -11,13 +11,13 @@ A lightweight port proxy tool that can forward traffic from one port to another,
 Install dependencies
 
 ```bash
-npm i @cailiao/port-proxy
+npm i port-proxy
 ```
 
 #### Import
 
 ```javascript
-import PortProxy from '@cailiao/port-proxy'
+import PortProxy from 'port-proxy'
 ```
 
 #### Usage
@@ -68,33 +68,27 @@ new PortProxy(options: ProxyOptions)
 ##### Parameters
 
 - `options`: `Object` type, required, configuration options object
-
+  
   Properties of `options` are as follows:
-
+  
   - `source`: `string` type, required
 
     Listening address.
-
   - `sourcePort`: `number` type, required
 
     Listening port.
-
   - `target`: `string` type, required
 
     Target address.
-
   - `targetPort`: `number` type, required
 
     Target port.
-
   - `verbose`: `boolean` type, optional
 
     Whether to output detailed logs, default is false.
-
   - `protocol`: `'tcp' | 'udp'` type, optional
 
     Protocol to use, default is 'tcp'.
-
   - `limiteRate`: `number` type, optional
 
     Single TCP service rate limit, unit B/s, rate limit has 5% fluctuation for each TCP connection. Default is 0 (no limit).
@@ -136,14 +130,14 @@ Get the number of active connections.
 This library can also be used as a command line tool. After installing the package globally, you can use it directly:
 
 ```bash
-npm install -g @cailiao/port-proxy
+npm install -g port-proxy
 portproxy --source 127.0.0.1 --source-port 3001 --target 127.0.0.1 --target-port 3000 --verbose --protocol tcp --limite-rate 409600
 ```
 
 Or use it in your project:
 
 ```bash
-npx @cailiao/port-proxy --source 127.0.0.1 --source-port 3001 --target 127.0.0.1 --target-port 3000
+npx port-proxy --source 127.0.0.1 --source-port 3001 --target 127.0.0.1 --target-port 3000
 ```
 
 ### Options
