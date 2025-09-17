@@ -142,10 +142,10 @@ npx port-proxy --source 127.0.0.1 --source-port 3001 --target 127.0.0.1 --target
 
 ### Options
 
-- `--source <IP>`: Listening address (default: 0.0.0.0)
-- `--source-port <port>`: Listening port (default: 14491)
-- `--target <IP>`: Target address (default: 127.0.0.1)
-- `--target-port <port>`: Target port (default: 14490)
+- `--source <IP>`: Listening address
+- `--source-port <port>`: Listening port
+- `--target <IP>`: Target address
+- `--target-port <port>`: Target port
 - `--protocol <protocol>`: Protocol (default: tcp)
 - `--verbose`: Detailed output mode
 - `--limite-rate <rate>`: Single TCP service rate limit, unit B/s, default is 0 (no limit)
@@ -156,3 +156,9 @@ npx port-proxy --source 127.0.0.1 --source-port 3001 --target 127.0.0.1 --target
 ```bash
 portproxy --source 192.168.196.2 --source-port 14491 --target 127.0.0.1 --target-port 14490
 ```
+
+## 🤝 Support
+
+Enjoying this project? Show your support by giving it a star! ⭐
+
+Your stars help the project gain visibility and encourage further development.
