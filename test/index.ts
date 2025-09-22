@@ -2,7 +2,7 @@ import { existsSync, createWriteStream } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import express from 'express'
-import PortProxy from '../src/index.ts'
+import { PortProxy } from '../src/index.ts'
 
 const app = express()
 const port = process.env.PORT || 3000

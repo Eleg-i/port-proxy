@@ -17,7 +17,7 @@ npm i port-proxy
 #### Import
 
 ```javascript
-import PortProxy from 'port-proxy'
+import { PortProxy } from 'port-proxy'
 ```
 
 #### Usage

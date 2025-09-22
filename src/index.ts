@@ -30,7 +30,7 @@ interface ConnectionPair {
 /**
  * 端口代理
  */
-class PortProxy {
+export class PortProxy {
   static #totalLimiteRate: number = 0
 
   static #totalRate: number = 0
@@ -662,7 +662,7 @@ class PortProxy {
  * 解析命令行参数
  * @param args 命令行参数
  */
-export function parseArgs(args: string[]): ProxyOptions {
+function parseArgs(args: string[]): ProxyOptions {
   const options: ProxyOptions = {
     source: '0.0.0.0',
     sourcePort: 14491,
@@ -752,5 +752,3 @@ export async function main() {
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(console.error)
 }
-
-export default PortProxy
